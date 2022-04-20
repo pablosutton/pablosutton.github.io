@@ -1,6 +1,7 @@
 # Goblin Clan
 
 import time, random, math
+from dice import d4, d6, d10, d20
 
 # scores
 measures = {"gold": 10, "reputation": 10, "followers": 10, "tech_level": 10}
@@ -26,23 +27,33 @@ def check_win_lose():
             exit()
 
 def mining(miners):
-    mined_gold = int((miners/2)*attributes["lucky_sod"])
-    print("You mined {} gold.".format(mined_gold))
-    measures["gold"] += mined_gold
+    mining_luck = d20()
+    if mining_luck == 20:
+        mined_gold = (random.randint(10, 50)*random.randint(10, 50))
+        print("You hit the motherlode! You mined {} gold.".format(mined_gold))
+        measures["gold"] += mined_gold
+    elif mining_luck == 1:
+        dead_miners = int(miners/d4())
+        print("Rockfall! You lost {} goblins.".format(dead_miners))
+        measures["followers"] -= dead_miners
+    else:
+        mined_gold = int((miners/2)*attributes["lucky_sod"])
+        print("You mined {} gold.".format(mined_gold))
+        measures["gold"] += mined_gold
 
 def raiding(raiders):
     party_strength = raiders*attributes["sneaky_git"]
     print("Your strength is {}.".format(party_strength))
     opponent = random.choice(list(locals.keys()))
-    opponent_numbers = random.randint(1, 10)
+    opponent_numbers = int(d10())
     opponent_strength = locals[opponent]*opponent_numbers
     attack = input("The {} have {} warriors with a strength of {}, will you still raid?".format(opponent, opponent_numbers, opponent_strength))
     if attack == "n":
         return
     else:
-        your_roll = random.randint(1, 6)
+        your_roll = d6()
         print("You rolled {}.".format(your_roll))
-        opponent_roll = random.randint(1, 6)
+        opponent_roll = d6()
         print("The {} rolled {}.".format(opponent, opponent_roll))
         your_outcome = your_roll * party_strength
         opponent_outcome = opponent_roll * opponent_strength
@@ -82,6 +93,9 @@ def follower_growth(reputation):
 def game():
 
     goblins = measures["followers"]
+    miners = 0
+    raiders = 0
+    scientists = 0
 
     gold = measures["gold"]
 
@@ -91,24 +105,25 @@ def game():
 
     miners = int(input("How many goblins will you send to mine for gold today?"))
 
-    if miners > goblins:
+    while miners > goblins:
         miners = int(input("You do not have that many goblins. You have {} goblins. How many goblins will you send to mine for gold?".format(measures["followers"])))
-    else:
-        goblins = goblins - miners
 
-    raiders = int(input("You have {} goblins left. How many goblins will you send to raid local villages?".format(goblins)))
+    goblins = goblins - miners
 
-    if raiders > goblins:
-        raiders = int(input("You do not have that many goblins. You have {} goblins. How many goblins will you send to raid local villages?".format(goblins)))
-    else:
-        goblins = goblins - raiders
-
-    scientists = goblins
-
-    if scientists == 0:
+    if goblins == 0:
         pass
     else:
-        research_gold = int(input("You have {} gold. How much will you give to the goblins you've allowed to sit around and tinker?".format(gold)))
+        raiders = int(input("You have {} goblins left. How many goblins will you send to raid local villages?".format(goblins)))
+        if raiders > goblins:
+            raiders = int(input("You do not have that many goblins. You have {} goblins. How many goblins will you send to raid local villages?".format(goblins)))
+        else:
+            goblins = goblins - raiders
+
+    if goblins == 0:
+        pass
+    else:
+        scientists = goblins
+        research_gold = int(input("You have {} gold. How much will you give to the {} goblins you've allowed to sit around and tinker?".format(gold, scientists)))
         measures["gold"] -= research_gold
 
     time.sleep(0.5)
@@ -141,7 +156,7 @@ def game():
     time.sleep(0.5)
 
     for key in measures:
-        print("{} = {}".format(key, measures[key]))
+        print("Currently your {} score is {}".format(key, measures[key]))
     check_win_lose()
 
 while True:
